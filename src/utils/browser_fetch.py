@@ -2,12 +2,13 @@ from playwright.sync_api import sync_playwright
 from typing import Optional
 
 
-def fetch_html(url: str, wait_selector: Optional[str] = None, timeout_ms: int = 20000, referer: Optional[str] = None) -> str:
+def fetch_html(url: str, wait_selector: Optional[str] = None, timeout_ms: int = 15000, referer: Optional[str] = None, short_wait_ms: int = 600) -> str:
     """
     Fetch page HTML using Playwright Chromium in headless mode.
     - wait_selector: optional CSS selector to wait for before returning content.
     - timeout_ms: maximum time to wait for navigation/selector.
     - referer: optional referer header to set for initial navigation.
+    - short_wait_ms: when selector wait fails or not provided, wait briefly before reading content.
     Returns the full page content as a string.
     """
     with sync_playwright() as p:
@@ -30,8 +31,9 @@ def fetch_html(url: str, wait_selector: Optional[str] = None, timeout_ms: int = 
             try:
                 page.wait_for_selector(wait_selector, timeout=timeout_ms)
             except Exception:
-                # Fallback to a short wait to allow dynamic content to settle
-                page.wait_for_timeout(1500)
+                page.wait_for_timeout(short_wait_ms)
+        else:
+            page.wait_for_timeout(short_wait_ms)
         html = page.content()
         context.close()
         browser.close()

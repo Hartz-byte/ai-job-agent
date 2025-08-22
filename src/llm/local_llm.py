@@ -18,8 +18,10 @@ class LocalMistral(LLM):
         )
 
     def generate(self, prompt: str, max_tokens: int = 768, temperature: float = 0.6) -> str:
-        # Simple instruct format
-        full = f"<s>[INST]{prompt}[/INST]"
+        # Simple instruct format without duplicate BOS token
+        if prompt.lstrip().startswith("<s>"):
+            prompt = prompt.lstrip()[3:].lstrip()
+        full = f"[INST] {prompt} [/INST]"
         out = self.llm(
             full,
             max_tokens=max_tokens,

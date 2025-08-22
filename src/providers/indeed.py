@@ -21,7 +21,7 @@ def _fetch(q: str, start: int = 0):
     params = {"q": q, "start": start}
     url = f"{BASE}?{urlencode(params)}"
     # Use Playwright to bypass basic bot protections
-    html = fetch_html(url, wait_selector="div.job_seen_beacon", timeout_ms=25000, referer="https://in.indeed.com/")
+    html = fetch_html(url, wait_selector="div.job_seen_beacon", timeout_ms=15000, referer="https://in.indeed.com/")
     return html
 
 

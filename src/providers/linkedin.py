@@ -8,6 +8,7 @@ from config import cfg
 from storage.models import JobPost
 from utils.dedupe import job_key
 from utils.location_filter import is_location_ok, normalize_location
+from utils.browser_fetch import fetch_html
 
 # Configure logging (ensure directory exists)
 os.makedirs('output/logs', exist_ok=True)
@@ -70,11 +71,11 @@ def linkedin_login():
 
 def _parse_job_page(job_url: str) -> tuple[str, str, str, str]:
     """Fetch a LinkedIn job page and try to parse title, company, location, description.
+    Uses Playwright via fetch_html to reduce 429/anti-bot issues.
     Returns (title, company, location, description). Fallbacks to safe defaults."""
     try:
-        r = session.get(job_url, timeout=30)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, 'html.parser')
+        html = fetch_html(job_url, wait_selector="h1, h1.top-card-layout__title, h1.topcard__title", timeout_ms=15000, referer=BASE_URL)
+        soup = BeautifulSoup(html, 'lxml')
         # Try multiple selectors as LinkedIn changes frequently
         title = (soup.select_one('h1') or soup.select_one('h1.top-card-layout__title') or soup.select_one('h1.topcard__title'))
         title = title.get_text(strip=True) if title else 'Unknown'
@@ -130,11 +131,11 @@ def search(query: str, locations: list[str]):
 def search_jobs(keywords, location="India", experience="Entry level", remote=True):
     """
     Searches LinkedIn jobs based on keywords, location, and filters.
+    Uses Playwright to fetch search results page for better reliability.
     Returns a list of job URLs.
     """
     try:
         logging.info(f"Searching LinkedIn jobs for keywords: {keywords}, location: {location}")
-        
         params = {
             "keywords": keywords,
             "location": location,
@@ -142,18 +143,14 @@ def search_jobs(keywords, location="India", experience="Entry level", remote=Tru
             "f_WT": "2" if remote else "",  # Remote filter
             "sortBy": "R"  # Recent
         }
-
         url = f"{JOB_SEARCH_URL}?{urlencode(params)}"
-        response = session.get(url)
-        soup = BeautifulSoup(response.content, "html.parser")
-
+        html = fetch_html(url, wait_selector="a.base-card__full-link", timeout_ms=15000, referer=BASE_URL)
+        soup = BeautifulSoup(html, "lxml")
         job_links = []
         for link in soup.find_all("a", {"class": "base-card__full-link"}, href=True):
             job_links.append(link["href"])
-
         logging.info(f"Found {len(job_links)} jobs on LinkedIn.")
         return job_links
-
     except Exception as e:
         logging.error(f"Error searching jobs: {str(e)}")
         return []

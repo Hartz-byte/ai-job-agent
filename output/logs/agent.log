@@ -1,9 +1,0 @@
-2025-08-22 10:43:18,107 [INFO] main: Parsed resume: name=None email=harshmail281199@gmail.comLinkedin
-2025-08-22 10:43:18,108 [INFO] main: Searching indeed for 'machine learning'
-2025-08-22 10:45:07,922 [INFO] main: Searching wellfound for 'machine learning'
-2025-08-22 10:45:45,807 [INFO] main: Searching internshala for 'machine learning'
-2025-08-22 10:45:51,386 [INFO] main: Searching linkedin for 'machine learning'
-2025-08-22 10:50:55,423 [INFO] main: Tailored docs: output/tailored/internshala_9aeda2b57294_resume.docx, output/tailored/internshala_9aeda2b57294_cover_letter.docx
-2025-08-22 10:50:55,436 [INFO] main: Applied=False to Internship @ Unknown (internshala) -> https://internshala.com#
-2025-08-22 10:56:03,461 [INFO] main: Tailored docs: output/tailored/internshala_9aeda2b57294_resume.docx, output/tailored/internshala_9aeda2b57294_cover_letter.docx
-2025-08-22 10:56:03,470 [INFO] main: Applied=False to Internship @ Unknown (internshala) -> https://internshala.com#

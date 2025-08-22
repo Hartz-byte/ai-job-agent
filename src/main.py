@@ -15,6 +15,11 @@ from providers import linkedin as linkedin_p
 
 logger = get_logger("main")
 
+def _safe_part(s: str, limit: int = 12) -> str:
+    part = ''.join(ch for ch in s if ch.isalnum() or ch in ('-', '_', ' ')).strip().replace(' ', '-')
+    return part[:limit] if part else 'x'
+
+
 def gather_jobs() -> list[JobPost]:
     prefs = get_preferences()
     locations = prefs.cities or ["India"]
@@ -25,11 +30,15 @@ def gather_jobs() -> list[JobPost]:
     if cfg.enable_linkedin: providers.append(("linkedin", linkedin_p.search))
 
     results: list[JobPost] = []
+    seen_ids: set[str] = set()
     for kw in prefs.keywords:
         for name, fn in providers:
             try:
                 logger.info(f"Searching {name} for '{kw}'")
                 for job in fn(kw, locations):
+                    if job.job_id in seen_ids:
+                        continue
+                    seen_ids.add(job.job_id)
                     upsert_job(job.job_id, job.title, job.company, job.location, job.url, job.source)
                     results.append(job)
             except Exception as e:
@@ -37,10 +46,15 @@ def gather_jobs() -> list[JobPost]:
     return results
 
 def process_jobs(jobs: Iterable[JobPost], profile):
+    processed: set[str] = set()
     for job in jobs:
+        if job.job_id in processed:
+            continue
+        processed.add(job.job_id)
         if is_applied(job.job_id):
             continue
-        job_slug = f"{job.source}_{job.job_id[:12]}"
+        # Make slug more unique and safe
+        job_slug = f"{job.source}_{_safe_part(job.company, 10)}_{_safe_part(job.title, 14)}_{job.job_id[:8]}"
         resume_out, cl_out = tailor_resume_and_cl(profile, job.description or job.title, job_slug)
         logger.info(f"Tailored docs: {resume_out}, {cl_out}")
         # Attempt application (only if provider supports it here)
