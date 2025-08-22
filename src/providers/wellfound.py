@@ -1,24 +1,29 @@
 import requests, time
 from bs4 import BeautifulSoup
 from typing import Iterable
-from ..storage.models import JobPost
-from ..utils.dedupe import job_key
-from ..utils.location_filter import is_location_ok, normalize_location
-from ..config import cfg
-from ..utils.rate_limit import TokenBucket
-from ..utils.logger import get_logger
+from storage.models import JobPost
+from utils.dedupe import job_key
+from utils.location_filter import is_location_ok, normalize_location
+from config import cfg
+from utils.rate_limit import TokenBucket
+from utils.logger import get_logger
+from urllib.parse import urlencode
+from utils.browser_fetch import fetch_html
 
 logger = get_logger("wellfound")
 bucket = TokenBucket(cfg.requests_per_min)
 
 BASE = "https://wellfound.com/jobs"  # formerly AngelList
 
+
 def _fetch(q: str):
     bucket.consume()
-    url = f"{BASE}?keyword={q.replace(' ', '%20')}"
-    r = requests.get(url, timeout=20, headers={"User-Agent":"Mozilla/5.0"})
-    r.raise_for_status()
-    return r.text
+    params = {"keyword": q}
+    url = f"{BASE}?{urlencode(params)}"
+    # Use Playwright to bypass basic bot protections
+    html = fetch_html(url, wait_selector="[data-test='job-row'], a[href*='/jobs/']", timeout_ms=25000, referer="https://wellfound.com/")
+    return html
+
 
 def search(query: str, locations: list[str]) -> Iterable[JobPost]:
     try:

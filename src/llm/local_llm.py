@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from llama_cpp import Llama
-from ..config import cfg
+from config import cfg
 
 @dataclass
 class LLM:

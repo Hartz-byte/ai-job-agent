@@ -1,5 +1,5 @@
 import sqlite3
-from ..config import cfg
+from config import cfg
 
 def get_conn():
     conn = sqlite3.connect(cfg.db_path)

@@ -1,17 +1,17 @@
 from typing import Iterable
-from .config import cfg
-from .preferences import get_preferences
-from .utils.logger import get_logger
-from .storage.db import upsert_job, is_applied
-from .parsers.resume_parser import parse_resume
-from .generators.tailor import tailor_resume_and_cl
-from .apply.applicant import apply
-from .storage.models import JobPost
+from config import cfg
+from preferences import get_preferences
+from utils.logger import get_logger
+from storage.db import upsert_job, is_applied
+from parsers.resume_parser import parse_resume
+from generators.tailor import tailor_resume_and_cl
+from apply.applicant import apply
+from storage.models import JobPost
 
-from .providers import indeed as indeed_p
-from .providers import wellfound as wellfound_p
-from .providers import internshala as internshala_p
-from .providers import linkedin as linkedin_p
+from providers import indeed as indeed_p
+from providers import wellfound as wellfound_p
+from providers import internshala as internshala_p
+from providers import linkedin as linkedin_p
 
 logger = get_logger("main")
 

@@ -1,10 +1,10 @@
 import os
 from docx import Document
 from jinja2 import Template
-from ..llm import get_llm
-from ..llm.prompts import TAILOR_PROMPT, COVER_LETTER_PROMPT
-from ..parsers.resume_parser import ResumeProfile
-from ..config import cfg
+from llm import get_llm
+from llm.prompts import TAILOR_PROMPT, COVER_LETTER_PROMPT
+from parsers.resume_parser import ResumeProfile
+from config import cfg
 
 def _save_docx_paragraphs(paragraphs: list[str], out_path: str):
     doc = Document()

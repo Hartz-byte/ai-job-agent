@@ -1,12 +1,12 @@
 import requests, time
 from bs4 import BeautifulSoup
 from typing import Iterable
-from ..storage.models import JobPost
-from ..utils.dedupe import job_key
-from ..utils.location_filter import is_location_ok, normalize_location
-from ..config import cfg
-from ..utils.rate_limit import TokenBucket
-from ..utils.logger import get_logger
+from storage.models import JobPost
+from utils.dedupe import job_key
+from utils.location_filter import is_location_ok, normalize_location
+from config import cfg
+from utils.rate_limit import TokenBucket
+from utils.logger import get_logger
 
 logger = get_logger("internshala")
 bucket = TokenBucket(cfg.requests_per_min)

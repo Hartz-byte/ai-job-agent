@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from .config import cfg
+from config import cfg
 
 @dataclass
 class Preferences:

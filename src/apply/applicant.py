@@ -1,7 +1,7 @@
-from ..storage.models import JobPost
-from ..storage.db import mark_applied
-from ..config import cfg
-from ..utils.logger import get_logger
+from storage.models import JobPost
+from storage.db import mark_applied
+from config import cfg
+from utils.logger import get_logger
 from playwright.sync_api import sync_playwright
 import time
 

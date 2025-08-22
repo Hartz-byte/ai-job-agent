@@ -1,11 +1,9 @@
-2025-08-22 08:55:04,980 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 08:55:59,958 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 08:56:41,868 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 09:00:42,622 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 09:00:54,084 [WARNING] linkedin: No LinkedIn job cards found on the page. UI/layout may have changed or login required.
-2025-08-22 09:02:43,977 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 09:03:08,813 [WARNING] linkedin: No LinkedIn job cards found on the page. UI/layout may have changed or login required.
-2025-08-22 09:05:13,864 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 09:05:39,970 [WARNING] linkedin: No LinkedIn job cards found on the page. UI/layout may have changed or login required.
-2025-08-22 09:12:25,947 [INFO] linkedin: LinkedIn search https://www.linkedin.com/jobs/search/?keywords=machine%20learning&location=India&f_AL=true
-2025-08-22 09:12:53,745 [WARNING] linkedin: No LinkedIn job cards found on the page. UI/layout may have changed or login required.
+2025-08-22 10:43:18,107 [INFO] main: Parsed resume: name=None email=harshmail281199@gmail.comLinkedin
+2025-08-22 10:43:18,108 [INFO] main: Searching indeed for 'machine learning'
+2025-08-22 10:45:07,922 [INFO] main: Searching wellfound for 'machine learning'
+2025-08-22 10:45:45,807 [INFO] main: Searching internshala for 'machine learning'
+2025-08-22 10:45:51,386 [INFO] main: Searching linkedin for 'machine learning'
+2025-08-22 10:50:55,423 [INFO] main: Tailored docs: output/tailored/internshala_9aeda2b57294_resume.docx, output/tailored/internshala_9aeda2b57294_cover_letter.docx
+2025-08-22 10:50:55,436 [INFO] main: Applied=False to Internship @ Unknown (internshala) -> https://internshala.com#
+2025-08-22 10:56:03,461 [INFO] main: Tailored docs: output/tailored/internshala_9aeda2b57294_resume.docx, output/tailored/internshala_9aeda2b57294_cover_letter.docx
+2025-08-22 10:56:03,470 [INFO] main: Applied=False to Internship @ Unknown (internshala) -> https://internshala.com#

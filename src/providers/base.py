@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Iterable
-from ..storage.models import JobPost
+from storage.models import JobPost
 
 @dataclass
 class Provider:
