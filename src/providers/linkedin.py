@@ -104,14 +104,18 @@ def search(query: str, locations: list[str]):
     locs = locations or ["India"]
     for loc in locs:
         try:
-            job_urls = search_jobs(keywords=query, location=loc, remote=cfg.remote_ok or cfg.remote_global_ok)
+            items = search_jobs(keywords=query, location=loc, remote=cfg.remote_ok or cfg.remote_global_ok)
         except Exception as e:
             logging.error(f"LinkedIn search failed for location '{loc}': {e}")
             continue
 
-        for url in job_urls:
+        cap = 30  # limit per location
+        for item in items[:cap]:
             try:
-                title, company, location, description = _parse_job_page(url)
+                title = item.get("title") or "Unknown"
+                company = item.get("company") or "Unknown"
+                location = item.get("location") or normalize_location(loc)
+                description = ""
                 if not is_location_ok(location, cfg.cities, cfg.countries, cfg.remote_ok, cfg.remote_global_ok):
                     continue
                 jid = job_key(title, company, location)
@@ -120,37 +124,78 @@ def search(query: str, locations: list[str]):
                     company=company,
                     location=location,
                     description=description,
-                    url=url,
+                    url=item.get("url", "#"),
                     source='linkedin',
                     job_id=jid,
                 )
             except Exception as e:
-                logging.warning(f"Failed to parse or yield job '{url}': {e}")
+                logging.warning(f"Failed to parse or yield job '{item}': {e}")
 
 
 def search_jobs(keywords, location="India", experience="Entry level", remote=True):
     """
-    Searches LinkedIn jobs based on keywords, location, and filters.
-    Uses Playwright to fetch search results page for better reliability.
+    Searches LinkedIn jobs using the public jobs-guest endpoint with pagination.
     Returns a list of job URLs.
     """
     try:
         logging.info(f"Searching LinkedIn jobs for keywords: {keywords}, location: {location}")
-        params = {
-            "keywords": keywords,
-            "location": location,
-            "f_E": "2",  # Entry-level
-            "f_WT": "2" if remote else "",  # Remote filter
-            "sortBy": "R"  # Recent
-        }
-        url = f"{JOB_SEARCH_URL}?{urlencode(params)}"
-        html = fetch_html(url, wait_selector="a.base-card__full-link", timeout_ms=15000, referer=BASE_URL)
-        soup = BeautifulSoup(html, "lxml")
-        job_links = []
-        for link in soup.find_all("a", {"class": "base-card__full-link"}, href=True):
-            job_links.append(link["href"])
-        logging.info(f"Found {len(job_links)} jobs on LinkedIn.")
-        return job_links
+        results: list[dict] = []
+        start = 0
+        per_page_empty = 0
+        while start <= 150 and len(results) < 60:  # up to ~6 pages or 60 results cap
+            params = {
+                "keywords": keywords,
+                "location": location,
+                "f_E": "2",  # Entry-level
+                "f_WT": "2" if remote else "",  # Remote filter
+                "sortBy": "R",
+                "start": str(start),
+            }
+            url = f"{BASE_URL}/jobs-guest/jobs/api/seeMoreJobPostings/search?{urlencode(params)}"
+            r = session.get(url, timeout=15)
+            if r.status_code != 200:
+                logging.info(f"LinkedIn guest page {start} returned {r.status_code}")
+                break
+            html = r.text
+            soup = BeautifulSoup(html, "lxml")
+            cards = soup.select(".base-search-card, .job-search-card")
+            page_items = []
+            for card in cards:
+                a = card.select_one("a.base-card__full-link, a[data-tracking-control-name]")
+                href = a.get("href") if a else None
+                if not href:
+                    continue
+                title_el = card.select_one("h3.base-search-card__title, .job-card-list__title")
+                title = title_el.get_text(strip=True) if title_el else None
+                comp_el = card.select_one("h4.base-search-card__subtitle a, h4.base-search-card__subtitle, .job-card-container__company-name")
+                company = comp_el.get_text(strip=True) if comp_el else None
+                loc_el = card.select_one(".job-search-card__location, .base-search-card__metadata span")
+                loc_text = loc_el.get_text(strip=True) if loc_el else None
+                page_items.append({
+                    "url": href,
+                    "title": title,
+                    "company": company,
+                    "location": normalize_location(loc_text) if loc_text else normalize_location(location),
+                })
+            if not page_items:
+                per_page_empty += 1
+                if per_page_empty >= 2:
+                    break
+            else:
+                per_page_empty = 0
+                results.extend(page_items)
+            start += 25
+            time.sleep(0.4)
+        # De-duplicate by URL
+        deduped = []
+        seen = set()
+        for item in results:
+            if item["url"] in seen:
+                continue
+            seen.add(item["url"])
+            deduped.append(item)
+        logging.info(f"Found {len(deduped)} jobs on LinkedIn.")
+        return deduped
     except Exception as e:
         logging.error(f"Error searching jobs: {str(e)}")
         return []

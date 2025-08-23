@@ -28,11 +28,14 @@ def parse_resume(path: str) -> ResumeProfile:
     # Primitive heuristics; LLM will refine during tailoring
     import re
     email = None
-    m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)
-    if m: email = m.group(0)
+    # Use a stricter TLD end to avoid swallowing trailing letters (e.g., 'Linkedin')
+    m = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(?:[A-Za-z]{2,})(?![A-Za-z])", text)
+    if m:
+        email = m.group(0).strip()
     phone = None
     m2 = re.search(r"(?:\+?\d[\s-]?){8,15}", text)
-    if m2: phone = m2.group(0)
+    if m2:
+        phone = m2.group(0).strip()
     # skill guess
     skills = []
     for kw in ["python","pytorch","tensorflow","scikit","ml","ai","nlp","cv","react","node","mongodb","docker","aws","fastapi","gensim","transformers","llm","langchain"]:
@@ -40,6 +43,16 @@ def parse_resume(path: str) -> ResumeProfile:
             skills.append(kw)
     name = None
     lines = [l.strip() for l in text.splitlines() if l.strip()]
-    if lines: name = lines[0] if len(lines[0].split())<=5 else None
+    # try to detect a name: first non-email line with 2-4 words, each starting with a letter
+    for l in lines[:10]:
+        if email and email in l:
+            continue
+        words = l.split()
+        if 2 <= len(words) <= 4 and all(w[0].isalpha() for w in words if w):
+            name = l
+            break
+    if not name and lines:
+        cand = lines[0]
+        name = cand if len(cand.split()) <= 5 else None
     summary = None
     return ResumeProfile(name=name, email=email, phone=phone, skills=skills, summary=summary, raw_text=text)

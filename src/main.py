@@ -55,7 +55,7 @@ def process_jobs(jobs: Iterable[JobPost], profile):
             continue
         # Make slug more unique and safe
         job_slug = f"{job.source}_{_safe_part(job.company, 10)}_{_safe_part(job.title, 14)}_{job.job_id[:8]}"
-        resume_out, cl_out = tailor_resume_and_cl(profile, job.description or job.title, job_slug)
+        resume_out, cl_out = tailor_resume_and_cl(profile, job, job_slug)
         logger.info(f"Tailored docs: {resume_out}, {cl_out}")
         # Attempt application (only if provider supports it here)
         applied = apply(job, resume_out, cl_out)
