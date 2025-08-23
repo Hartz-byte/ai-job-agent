@@ -152,9 +152,22 @@ def search_jobs(keywords, location="India", experience="Entry level", remote=Tru
                 "start": str(start),
             }
             url = f"{BASE_URL}/jobs-guest/jobs/api/seeMoreJobPostings/search?{urlencode(params)}"
-            r = session.get(url, timeout=15)
-            if r.status_code != 200:
-                logging.info(f"LinkedIn guest page {start} returned {r.status_code}")
+            # Basic backoff on 429
+            attempts = 0
+            backoff = 1.0
+            r = None
+            while attempts < 3:
+                r = session.get(url, timeout=15)
+                if r.status_code == 429:
+                    logging.info(f"LinkedIn guest page {start} returned 429, backing off {backoff:.1f}s (attempt {attempts+1}/3)")
+                    time.sleep(backoff)
+                    backoff *= 2
+                    attempts += 1
+                    continue
+                break
+            if not r or r.status_code != 200:
+                code = r.status_code if r else 'n/a'
+                logging.info(f"LinkedIn guest page {start} returned {code}")
                 break
             html = r.text
             soup = BeautifulSoup(html, "lxml")

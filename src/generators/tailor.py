@@ -6,6 +6,9 @@ from llm.prompts import TAILOR_PROMPT, COVER_LETTER_PROMPT
 from parsers.resume_parser import ResumeProfile
 from storage.models import JobPost
 from config import cfg
+from utils.logger import get_logger
+
+logger = get_logger("tailor")
 
 def _save_docx_paragraphs(paragraphs: list[str], out_path: str):
     doc = Document()
@@ -31,14 +34,27 @@ def _render_resume_template(summary: str, bullets: list[str], skills: str, out_p
                     par.runs[0].clear()
                 par.text = par.text.replace(placeholder, replacement)
 
-        # First pass: replace SUMMARY and SKILLS placeholders directly
+        # First pass: replace SUMMARY and SKILLS placeholders directly (curly + bracket anchors)
         bullet_anchor_idx = None
+        used_placeholder = False
+        used_bracket = False
         for i, p in enumerate(doc.paragraphs):
             if "{{SUMMARY}}" in p.text:
                 replace_in_paragraph(p, "{{SUMMARY}}", summary)
+                used_placeholder = True
             if "{{SKILLS}}" in p.text:
                 replace_in_paragraph(p, "{{SKILLS}}", skills)
+                used_placeholder = True
             if "{{BULLETS}}" in p.text and bullet_anchor_idx is None:
+                bullet_anchor_idx = i
+            # Bracket anchors
+            if "[TAILOR_SUMMARY]" in p.text:
+                replace_in_paragraph(p, "[TAILOR_SUMMARY]", summary)
+                used_bracket = True
+            if "[TAILOR_SKILLS]" in p.text:
+                replace_in_paragraph(p, "[TAILOR_SKILLS]", skills)
+                used_bracket = True
+            if "[TAILOR_BULLETS]" in p.text and bullet_anchor_idx is None:
                 bullet_anchor_idx = i
 
         # Replace BULLETS anchor with individual bullet paragraphs
@@ -53,6 +69,7 @@ def _render_resume_template(summary: str, bullets: list[str], skills: str, out_p
                     par.style = 'List Bullet'
                 except Exception:
                     pass
+            logger.info("Tailor path: anchor-bullets (%s)", "curly" if used_placeholder else ("bracket" if used_bracket else "unknown"))
         else:
             # No explicit placeholders found; try smart in-place replacement using headers
             lower = lambda s: (s or "").strip().lower()
@@ -72,6 +89,7 @@ def _render_resume_template(summary: str, bullets: list[str], skills: str, out_p
                         j += 1
                     if j < n:
                         doc.paragraphs[j].text = summary
+                    logger.info("Tailor path: smart SUMMARY")
                     break
 
             # Replace Skills section
@@ -112,6 +130,7 @@ def _render_resume_template(summary: str, bullets: list[str], skills: str, out_p
                         except Exception:
                             pass
                         bi += 1
+                    logger.info("Tailor path: smart BULLETS (%d)", len(bullets))
                     break
         doc.save(out_path)
     except Exception:
