@@ -12,6 +12,12 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 import streamlit as st
+try:
+    from streamlit_extras.st_autorefresh import st_autorefresh
+except Exception:
+    # Fallback: define a no-op if optional extra is not installed
+    def st_autorefresh(*args, **kwargs):
+        st.caption("[Note] Install 'streamlit-extras' for auto-refresh.")
 
 from config import cfg
 from preferences import get_preferences
@@ -21,6 +27,7 @@ from providers import wellfound as wellfound_p
 from providers import internshala as internshala_p
 from providers import linkedin as linkedin_p
 from utils.logger import get_logger
+from storage.db import get_conn
 
 logger = get_logger("ui")
 
@@ -110,6 +117,10 @@ def main():
         with col_b:
             stop = st.button("Stop", disabled=not st.session_state.search_running)
 
+        st.subheader("Results Source")
+        show_db = st.checkbox("Show results from database (includes backend main.py)", value=True, help="If enabled, the Results tab will read from the SQLite jobs table so you can see jobs gathered by the backend pipeline.")
+        st.session_state.show_db = show_db
+
         if start and not st.session_state.search_running:
             st.session_state.jobs = []
             st.session_state.search_running = True
@@ -139,43 +150,66 @@ def main():
             st.markdown("**LinkedIn Log**")
             li_area = st.empty()
 
-        # Auto-refresh logs while searching
-        if st.session_state.search_running:
-            # small auto-updating loop
-            for _ in range(60):  # ~60 seconds viewport; search thread continues
-                agent_lines = _tail_file(LOG_FILES[0][1])
-                li_lines = _tail_file(LOG_FILES[1][1])
-                agent_area.code("".join(agent_lines), language="text")
-                li_area.code("".join(li_lines), language="text")
-                time.sleep(1)
-                if not st.session_state.search_running:
-                    break
-        else:
-            agent_lines = _tail_file(LOG_FILES[0][1])
-            li_lines = _tail_file(LOG_FILES[1][1])
-            agent_area.code("".join(agent_lines), language="text")
-            li_area.code("".join(li_lines), language="text")
+        # Always auto-refresh logs independently of search state
+        st_autorefresh(interval=1000, key="logs_refresh")
+        agent_lines = _tail_file(LOG_FILES[0][1])
+        li_lines = _tail_file(LOG_FILES[1][1])
+        agent_area.code("".join(agent_lines), language="text")
+        li_area.code("".join(li_lines), language="text")
 
     with tab_results:
         st.subheader("Found Jobs")
         st.caption(f"Last update: {st.session_state.last_update}")
-        jobs = st.session_state.jobs or []
-        st.write(f"Total: {len(jobs)}")
-        for j in jobs:
-            with st.container(border=True):
-                top = st.columns([3, 2, 2, 2, 1])
-                with top[0]:
-                    st.markdown(f"**{j.title}**")
-                with top[1]:
-                    st.text(j.company)
-                with top[2]:
-                    st.text(j.location)
-                with top[3]:
-                    st.text(j.source)
-                with top[4]:
-                    st.link_button("Open", j.url or "#")
-                with st.expander("About this job"):
-                    st.write(j.description or "")
+
+        def _load_jobs_from_db(limit: int = 200):
+            try:
+                conn = get_conn()
+                cur = conn.cursor()
+                cur.execute("SELECT id, title, company, location, url, source, created_at FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,))
+                rows = cur.fetchall()
+                conn.close()
+                return rows
+            except Exception as e:
+                st.warning(f"DB read failed: {e}")
+                return []
+
+        if st.session_state.get("show_db", True):
+            rows = _load_jobs_from_db()
+            st.write(f"Total (latest {len(rows)} from DB): {len(rows)}")
+            for (jid, title, company, location, url, source, created_at) in rows:
+                with st.container(border=True):
+                    top = st.columns([3, 2, 2, 2, 1])
+                    with top[0]:
+                        st.markdown(f"**{title}**")
+                    with top[1]:
+                        st.text(company)
+                    with top[2]:
+                        st.text(location)
+                    with top[3]:
+                        st.text(source)
+                    with top[4]:
+                        st.link_button("Open", url or "#")
+                    with st.expander("Meta"):
+                        st.text(f"Job ID: {jid}")
+                        st.text(f"Created: {created_at}")
+        else:
+            jobs = st.session_state.jobs or []
+            st.write(f"Total (this UI session): {len(jobs)}")
+            for j in jobs:
+                with st.container(border=True):
+                    top = st.columns([3, 2, 2, 2, 1])
+                    with top[0]:
+                        st.markdown(f"**{j.title}**")
+                    with top[1]:
+                        st.text(j.company)
+                    with top[2]:
+                        st.text(j.location)
+                    with top[3]:
+                        st.text(j.source)
+                    with top[4]:
+                        st.link_button("Open", j.url or "#")
+                    with st.expander("About this job"):
+                        st.write(j.description or "")
 
     with tab_about:
         st.markdown("""
