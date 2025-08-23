@@ -35,12 +35,13 @@ def search(query: str, locations: list[str]) -> Iterable[JobPost]:
         soup = BeautifulSoup(html, "lxml")
         cards = soup.select("div.job_seen_beacon")
         for c in cards:
-            title = (c.select_one("h2 a") or {}).get("aria-label") or (c.select_one("h2 a") or {}).get("title") or (c.select_one("h2 a") or {}).text if c.select_one("h2 a") else "Unknown"
-            url = "https://in.indeed.com" + (c.select_one("h2 a")["href"] if c.select_one("h2 a") and c.select_one("h2 a").has_attr("href") else "#")
-            company = (c.select_one(".company_name") or c.select_one("span.companyName"))
-            company = company.text.strip() if company else "Unknown"
-            loc = (c.select_one(".company_location") or c.select_one(".companyLocation"))
-            loc = normalize_location(loc.text if loc else "")
+            a = c.select_one("h2 a")
+            title = (a.get("aria-label") if a and a.has_attr("aria-label") else None) or (a.get("title") if a and a.has_attr("title") else None) or (a.get_text(strip=True) if a else None) or "Unknown"
+            url = "https://in.indeed.com" + (a["href"] if a and a.has_attr("href") else "#")
+            comp_el = c.select_one(".company_name, span.companyName, .jobCardShelfContainer .companyName")
+            company = comp_el.get_text(strip=True) if comp_el else "Unknown"
+            loc_el = c.select_one(".company_location, .companyLocation, .metadataContainer .companyLocation")
+            loc = normalize_location(loc_el.get_text(strip=True) if loc_el else "")
             desc = (c.select_one(".job-snippet") or c.select_one(".resultContent")).text.strip() if c.select_one(".job-snippet") or c.select_one(".resultContent") else ""
             if not is_location_ok(loc, cfg.cities, cfg.countries, cfg.remote_ok, cfg.remote_global_ok):
                 continue

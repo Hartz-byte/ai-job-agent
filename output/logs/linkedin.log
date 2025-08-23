@@ -1,2 +1,52 @@
-2025-08-23 03:21:35,101 - INFO - Parsed resume: name=None email=harshmail281199@gmail.comLinkedin
-2025-08-23 03:21:35,102 - INFO - Searching indeed for 'machine learning'
+2025-08-23 03:43:14,454 - INFO - Parsed resume: name=None email=harshmail281199@gmail.comLinkedin
+2025-08-23 03:43:14,455 - INFO - Searching indeed for 'machine learning'
+2025-08-23 03:44:32,521 - INFO - Searching wellfound for 'machine learning'
+2025-08-23 03:44:57,935 - INFO - Searching internshala for 'machine learning'
+2025-08-23 03:45:11,605 - INFO - Searching linkedin for 'machine learning'
+2025-08-23 03:45:11,605 - INFO - Fetching login page...
+2025-08-23 03:45:12,234 - INFO - Attempting login...
+2025-08-23 03:45:14,396 - INFO - LinkedIn login successful.
+2025-08-23 03:45:14,397 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Gurugram
+2025-08-23 03:45:21,745 - INFO - Found 50 jobs on LinkedIn.
+2025-08-23 03:45:21,907 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Delhi
+2025-08-23 03:45:24,560 - INFO - Found 10 jobs on LinkedIn.
+2025-08-23 03:45:24,561 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Noida
+2025-08-23 03:45:30,286 - INFO - Found 40 jobs on LinkedIn.
+2025-08-23 03:45:30,350 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Bangalore
+2025-08-23 03:45:35,971 - INFO - Found 31 jobs on LinkedIn.
+2025-08-23 03:45:36,138 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Pune
+2025-08-23 03:45:39,711 - INFO - Found 20 jobs on LinkedIn.
+2025-08-23 03:45:39,787 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Hyderabad
+2025-08-23 03:45:44,535 - INFO - Found 25 jobs on LinkedIn.
+2025-08-23 03:50:17,029 - INFO - Tailored docs: output/tailored/internshala_Unknown_Internship_9aeda2b5_resume.docx, output/tailored/internshala_Unknown_Internship_9aeda2b5_cover_letter.docx
+2025-08-23 03:50:17,043 - INFO - Applied=False to Internship @ Unknown (internshala) -> #
+2025-08-23 04:07:36,331 - INFO - Parsed resume: name=HARSH GUPTA email=harshmail281199@gmail.com
+2025-08-23 04:07:36,332 - INFO - Searching indeed for 'machine learning'
+2025-08-23 04:08:55,812 - INFO - Searching wellfound for 'machine learning'
+2025-08-23 04:09:21,755 - INFO - Searching internshala for 'machine learning'
+2025-08-23 04:09:35,133 - INFO - Searching linkedin for 'machine learning'
+2025-08-23 04:09:35,134 - INFO - Fetching login page...
+2025-08-23 04:09:35,778 - INFO - Attempting login...
+2025-08-23 04:09:36,669 - ERROR - LinkedIn login failed.
+2025-08-23 04:09:36,669 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Gurugram
+2025-08-23 04:09:42,982 - INFO - Found 50 jobs on LinkedIn.
+2025-08-23 04:09:43,109 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Delhi
+2025-08-23 04:09:45,458 - INFO - Found 10 jobs on LinkedIn.
+2025-08-23 04:09:45,459 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Noida
+2025-08-23 04:09:45,746 - INFO - LinkedIn guest page 0 returned 429
+2025-08-23 04:09:45,746 - INFO - Found 0 jobs on LinkedIn.
+2025-08-23 04:09:45,746 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Bangalore
+2025-08-23 04:09:46,036 - INFO - LinkedIn guest page 0 returned 429
+2025-08-23 04:09:46,037 - INFO - Found 0 jobs on LinkedIn.
+2025-08-23 04:09:46,037 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Pune
+2025-08-23 04:09:46,327 - INFO - LinkedIn guest page 0 returned 429
+2025-08-23 04:09:46,327 - INFO - Found 0 jobs on LinkedIn.
+2025-08-23 04:09:46,327 - INFO - Searching LinkedIn jobs for keywords: machine learning, location: Hyderabad
+2025-08-23 04:09:46,617 - INFO - LinkedIn guest page 0 returned 429
+2025-08-23 04:09:46,617 - INFO - Found 0 jobs on LinkedIn.
+2025-08-23 04:14:40,141 - INFO - Tailored docs: output/tailored/internshala_Unknown_Internship_9aeda2b5_resume.docx, output/tailored/internshala_Unknown_Internship_9aeda2b5_cover_letter.docx
+2025-08-23 04:14:40,156 - INFO - Applied=False to Internship @ Unknown (internshala) -> #
+2025-08-23 04:19:38,407 - INFO - Tailored docs: output/tailored/internshala_Arealis-Ne_AI--Backend--F_304f2ff0_resume.docx, output/tailored/internshala_Arealis-Ne_AI--Backend--F_304f2ff0_cover_letter.docx
+2025-08-23 04:19:38,418 - INFO - Applied=False to AI / Backend / Fullstack Developers @ Arealis Networks Pvt. Ltd.Actively hiring (internshala) -> https://internshala.com/internship/detail/ai-backend-fullstack-developers-internship-in-pune-at-arealis-networks-pvt-ltd1755860611
+2025-08-23 04:24:45,028 - INFO - Tailored docs: output/tailored/internshala_SMARRTIF-A_Associate-Cons_9b378868_resume.docx, output/tailored/internshala_SMARRTIF-A_Associate-Cons_9b378868_cover_letter.docx
+2025-08-23 04:24:45,037 - INFO - Applied=False to Associate Consultant – AI Trainer @ SMARRTIF AI (internshala) -> https://internshala.com/internship/detail/associate-consultant--ai-trainer-internship-in-delhi-at-smarrtif-ai1755837983

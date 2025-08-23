@@ -15,6 +15,7 @@ class Config(BaseModel):
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     resume_path: str = os.getenv("RESUME_PATH", "./data/resume.pdf")
+    resume_template_path: str = os.getenv("RESUME_TEMPLATE_PATH", "")
     cover_letter_base_path: str = os.getenv("COVER_LETTER_BASE_PATH", "./data/cover_letter_base.docx")
 
     countries: list[str] = [c.strip() for c in os.getenv("COUNTRIES", "India").split(",") if c.strip()]
