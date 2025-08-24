@@ -16,8 +16,18 @@ try:
     from streamlit_extras.st_autorefresh import st_autorefresh
 except Exception:
     # Fallback: define a no-op if optional extra is not installed
-    def st_autorefresh(*args, **kwargs):
-        st.caption("[Note] Install 'streamlit-extras' for auto-refresh.")
+    def st_autorefresh(interval: int = 1000, key: str | None = None, *args, **kwargs):
+        """Lightweight auto-refresh using HTML meta-refresh as a fallback.
+
+        interval: milliseconds between refreshes (rounded to >=1s for meta refresh)
+        key: unused, kept for API compatibility
+        """
+        # Meta refresh supports seconds granularity; keep it >= 1s
+        seconds = max(int(interval / 1000), 1)
+        st.markdown(
+            f"<meta http-equiv='refresh' content='{seconds}'>",
+            unsafe_allow_html=True,
+        )
 
 from config import cfg
 from preferences import get_preferences
@@ -121,6 +131,10 @@ def main():
         show_db = st.checkbox("Show results from database (includes backend main.py)", value=True, help="If enabled, the Results tab will read from the SQLite jobs table so you can see jobs gathered by the backend pipeline.")
         st.session_state.show_db = show_db
 
+        st.subheader("Live Logs Settings")
+        auto_refresh_logs = st.checkbox("Auto-refresh logs (every 10s)", value=False, help="Turn ON for background monitoring; keep OFF while interacting to avoid page refresh.")
+        st.session_state.auto_refresh_logs = auto_refresh_logs
+
         if start and not st.session_state.search_running:
             st.session_state.jobs = []
             st.session_state.search_running = True
@@ -150,8 +164,12 @@ def main():
             st.markdown("**LinkedIn Log**")
             li_area = st.empty()
 
-        # Always auto-refresh logs independently of search state
-        st_autorefresh(interval=1000, key="logs_refresh")
+        # Auto-refresh only if user enabled it; otherwise provide manual refresh
+        if st.session_state.get("auto_refresh_logs", False):
+            st_autorefresh(interval=10000, key="logs_refresh")
+        else:
+            st.info("Auto-refresh is off. Click to refresh logs.")
+            st.button("Refresh now", key="refresh_logs_now")
         agent_lines = _tail_file(LOG_FILES[0][1])
         li_lines = _tail_file(LOG_FILES[1][1])
         agent_area.code("".join(agent_lines), language="text")

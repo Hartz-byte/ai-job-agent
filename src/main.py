@@ -1,10 +1,13 @@
+import os
 from typing import Iterable
 from config import cfg
 from preferences import get_preferences
 from utils.logger import get_logger
 from storage.db import upsert_job, is_applied
 from parsers.resume_parser import parse_resume
-from generators.tailor import tailor_resume_and_cl
+from generators.services.resume_tailor import ResumeTailor
+from generators.services.cover_letter_service import CoverLetterService
+from generators.services.fallback_service import FallbackService
 from apply.applicant import apply
 from storage.models import JobPost
 
@@ -55,11 +58,44 @@ def process_jobs(jobs: Iterable[JobPost], profile):
             continue
         # Make slug more unique and safe
         job_slug = f"{job.source}_{_safe_part(job.company, 10)}_{_safe_part(job.title, 14)}_{job.job_id[:8]}"
-        resume_out, cl_out = tailor_resume_and_cl(profile, job, job_slug)
-        logger.info(f"Tailored docs: {resume_out}, {cl_out}")
-        # Attempt application (only if provider supports it here)
-        applied = apply(job, resume_out, cl_out)
-        logger.info(f"Applied={applied} to {job.title} @ {job.company} ({job.source}) -> {job.url}")
+        
+        # Create output directory if it doesn't exist
+        output_dir = os.path.join('output', 'tailored', job_slug)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Generate resume and cover letter
+        resume_out = os.path.join(output_dir, f'resume_{job_slug}.docx')
+        cl_out = os.path.join(output_dir, f'cover_letter_{job_slug}.docx')
+        
+        try:
+            # Create resume
+            resume_tailor = ResumeTailor(profile, job)
+            # Generate tailored content first
+            tailored_data = resume_tailor.generate_tailored_content()
+            # Create the resume with tailored content
+            resume_tailor.create_tailored_resume(tailored_data, resume_out)
+            
+            # Create cover letter
+            cl_service = CoverLetterService(profile, job)
+            cl_service.generate_cover_letter(cl_out)
+            
+            logger.info(f"Tailored docs: {resume_out}, {cl_out}")
+            
+            # Attempt application (only if provider supports it here)
+            applied = apply(job, resume_out, cl_out)
+            logger.info(f"Applied={applied} to {job.title} @ {job.company} ({job.source}) -> {job.url}")
+            
+        except Exception as e:
+            logger.error(f"Error processing job {job.job_id}: {e}")
+            # Try fallback mechanism if available
+            try:
+                fallback = FallbackService(profile, job)
+                fallback.create_basic_resume(resume_out)
+                logger.warning(f"Used fallback resume for {job.job_id}")
+                applied = apply(job, resume_out, None)
+                logger.info(f"Applied with fallback={applied} to {job.title} @ {job.company}")
+            except Exception as fallback_error:
+                logger.error(f"Fallback also failed for {job.job_id}: {fallback_error}")
 
 def main():
     profile = parse_resume(cfg.resume_path)

@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: ai-job-agent
+Version: 0.1
+Requires-Python: >=3.8
+Requires-Dist: python-docx
+Requires-Dist: pdfminer.six
+Requires-Dist: python-dotenv
+Requires-Dist: pydantic
+Dynamic: requires-dist
+Dynamic: requires-python

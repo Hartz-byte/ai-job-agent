@@ -1,0 +1,10 @@
+flowchart LR
+    A [User Inputs - Keywords • Locations • Preferences] --> B [Resume Parsing - Extract profile signals]
+    B --> C [Job Discovery - Multiple Providers]
+    C --> D [Normalization & Filtering - Deduping • Location/Remote rules]
+    D --> E [Lightweight Database - Persist jobs & state]
+    E --> F [LLM Tailoring - Resume & Cover Letter]
+    F --> G [Optional Apply Step - Simulated / Future automation]
+    E --> H [Dashboard - Results View • Live Logs]
+    C --> Observability --> H
+    F --> Outputs --> I [Tailored Documents]
