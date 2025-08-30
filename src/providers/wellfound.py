@@ -1,4 +1,4 @@
-import requests, time
+import time
 from bs4 import BeautifulSoup
 from typing import Iterable
 from storage.models import JobPost

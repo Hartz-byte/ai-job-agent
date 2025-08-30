@@ -1,14 +1,10 @@
-import os
 import logging
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, List
 from docx import Document
-from docx.shared import Pt
 
-from ..models.tailored_data import TailoredResumeData
 from ..utils.docx_utils import (
-    add_paragraph_with_style,
-    add_bullet_points
+    add_paragraph_with_style
 )
 from ..utils.template_utils import (
     get_template_path,
@@ -110,7 +106,7 @@ class CoverLetterService:
         
         if hasattr(self.profile, 'current_role') and self.profile.current_role:
             intro += f"With my experience as a {self.profile.current_role}, "
-            intro += f"I am confident in my ability to contribute effectively to your team. "
+            intro += "I am confident in my ability to contribute effectively to your team. "
         else:
             intro += "I am confident that my skills and experience make me a strong candidate. "
         

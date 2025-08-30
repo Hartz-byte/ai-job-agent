@@ -1,4 +1,3 @@
-from typing import Optional
 
 class MockLLM:
     def generate(self, prompt: str, max_tokens: int = 768, temperature: float = 0.6) -> str:

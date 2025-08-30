@@ -9,7 +9,6 @@ try:
     from src.llm import get_llm
     print("✅ Successfully imported get_llm")
     
-    from src.llm.local_llm import LocalMistral
     print("✅ Successfully imported LocalMistral")
     
     llm = get_llm()

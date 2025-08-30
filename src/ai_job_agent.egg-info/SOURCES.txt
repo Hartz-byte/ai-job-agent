@@ -20,6 +20,7 @@ src/generators/utils/parsing_utils.py
 src/generators/utils/template_utils.py
 src/llm/__init__.py
 src/llm/local_llm.py
+src/llm/mock_llm.py
 src/llm/prompts.py
 src/parsers/__init__.py
 src/parsers/job_parser.py

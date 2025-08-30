@@ -1,102 +1,50 @@
-TAILOR_PROMPT = """You are an expert AI/ML resume writer. Your task is to completely transform the candidate's resume to be highly targeted for the specific role below. This is not a minor edit - completely restructure and rewrite the content to maximize job fit.
+TAILOR_PROMPT = """
+You are an expert resume writer and career coach. Your task is to tailor the provided resume to a specific job description. You must only use the information available in the original resume.
 
-IMPORTANT: Do NOT simply copy content from the original resume. Thoroughly analyze the job requirements and rewrite all sections to highlight the most relevant qualifications. The output should be significantly different from the original resume.
-ALWAYS fill every section, especially the TECHNICAL SKILLS section, with relevant and non-empty content. Do NOT leave any section blank or copy-paste from the original resume.
+**CRITICAL RULE: Do not invent, add, or exaggerate any skills, experiences, or qualifications that are not explicitly mentioned in the original resume. Your goal is to rephrase, reframe, and highlight the existing information to align with the job description.**
 
-CONTEXT:
-Job Title: {job_title}
-Company: {company}
-Location: {location}
-Job URL: {job_url}
-
-CANDIDATE RESUME (raw text):
+**Resume Content:**
+---
 {resume_text}
+---
 
-JOB DESCRIPTION (raw text):
+**Job Description:**
+---
 {job_text}
+---
 
-TASK:
-Completely restructure and rewrite the resume to be perfectly aligned with the job requirements. Focus on quality over quantity - only include the most relevant information.
+**Instructions:**
 
-1) SUMMARY (3-4 lines):
-   - Start with a strong value proposition that directly addresses the job requirements
-   - Highlight only the most relevant years of experience and top 2-3 achievements
-   - Include specific technologies/tools mentioned in the job description
-   - Use action verbs and industry terminology
+1.  **Analyze the Job Description:** Carefully read the job description to identify the key requirements, skills, and qualifications the employer is looking for.
 
-2) WORK EXPERIENCE (Most recent 2-3 roles):
-   - Only include roles directly relevant to this position
-   - For each role, include 2-3 bullet points that:
-     * Start with strong action verbs (e.g., "Led", "Designed", "Optimized")
-     * Include specific technologies used (match job description keywords)
-     * Quantify achievements with metrics (e.g., "improved performance by 40%")
-     * Focus on results and impact, not just responsibilities
-   - Remove or de-emphasize irrelevant experience
+2.  **Tailor the Resume Content:** Rewrite the following sections of the resume to align with the job description.
 
-3) PROJECTS (2-3 most relevant):
-   - Only include projects that demonstrate required skills
-   - For each project:
-     * Name: Clear, descriptive title
-     * Technologies: List key technologies used (match job description)
-     * Description: 1-2 sentences explaining the project's purpose and your role
-     * Achievements: 1-2 bullet points with measurable outcomes
+    *   **SUMMARY:** Rewrite the summary to be a concise and impactful statement that highlights the candidate's most relevant qualifications and experiences for this specific job.
 
-4) TECHNICAL SKILLS (Structured format):
-   - Group skills into clear, relevant categories (e.g., "Machine Learning", "Programming Languages", "Cloud Platforms")
-   - List skills in order of relevance to the job
-   - Include proficiency levels where appropriate (e.g., "Advanced: Python, PyTorch")
-   - Match exact technology names from the job description
-   - Remove outdated or irrelevant skills
+    *   **EXPERIENCE:** For each role in the experience section, review the bullet points. Rephrase them to emphasize the accomplishments and responsibilities that are most relevant to the job description. Use action verbs and quantify achievements where possible (using the data from the original resume).
 
-5) EDUCATION & CERTIFICATIONS:
-   - Only include degrees/certifications relevant to this role
-   - Add relevant coursework if it strengthens your candidacy
-   - Include graduation years and institutions
-   - List relevant academic achievements (GPA if strong, honors, awards)
+    *   **PROJECTS:** For each project, rewrite the description to highlight the aspects that are most relevant to the job. Emphasize the technologies used and the outcomes achieved that align with the employer's needs.
 
-6) RESEARCH & PUBLICATIONS (If relevant):
-   - Only include work directly related to the job
-   - Use proper citation format
-   - Highlight your specific contributions
+    *   **SKILLS:** Review the skills list. You can reorder or group the skills to emphasize the ones that are most important for the job. Do not add any skills that are not in the original resume.
 
-STRICT OUTPUT FORMAT:
+3.  **Maintain Professional Tone:** Ensure the language is professional, confident, and tailored to the company and role.
 
-## SUMMARY
-[3-4 sentence professional summary that directly addresses the job requirements and highlights your most relevant qualifications]
+**Output Format:**
 
-## TECHNICAL SKILLS
-### [Primary Skill Category]
-- [Skill 1], [Skill 2], [Skill 3]
-- [Additional skills in this category]
+Provide the tailored content in the following format, with each section clearly marked.
 
-### [Secondary Skill Category]
-- [Skill 1], [Skill 2], [Skill 3]
+SUMMARY:
+<Your rewritten summary here>
 
-## PROFESSIONAL EXPERIENCE
-### [Job Title]
-[Company Name] | [Location] | [Dates]
-- [Achievement 1 - focus on impact and results]
-- [Achievement 2 - include specific technologies used]
-- [Achievement 3 - quantify results when possible]
+EXPERIENCE:
+<Your rewritten experience section here, with each job and its bullet points>
 
-### [Previous Job Title]
-[Company Name] | [Location] | [Dates]
-- [Most relevant achievement]
-- [Second most relevant achievement]
+PROJECTS:
+<Your rewritten projects section here>
 
-## PROJECTS
-### [Project Name]
-[Technologies: List key technologies used]
-- [Key achievement or contribution - be specific]
-- [Impact or result - use metrics if possible]
+SKILLS:
+<Your rewritten skills section here>
 
-## EDUCATION
-[Degree] in [Major]
-[University Name], [Graduation Year]
-[Relevant coursework or achievements]
-
-## RESEARCH PUBLICATIONS
-<Only publications relevant to job domain>
 """
 
 COVER_LETTER_PROMPT = """Write a highly personalized cover letter (250-350 words) for the specific job and company below. Research the company's mission, values, and recent developments to create a compelling narrative that shows genuine interest and perfect fit.

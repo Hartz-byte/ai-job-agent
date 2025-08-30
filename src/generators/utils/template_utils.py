@@ -1,9 +1,7 @@
 import os
 import logging
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
 from docx import Document
-from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import Pt
 
 logger = logging.getLogger("tailor")
 

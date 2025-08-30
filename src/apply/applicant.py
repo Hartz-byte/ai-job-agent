@@ -3,7 +3,6 @@ from storage.db import mark_applied
 from config import cfg
 from utils.logger import get_logger
 from playwright.sync_api import sync_playwright
-import time
 
 logger = get_logger("apply")
 
@@ -19,7 +18,8 @@ def apply_linkedin_easy_apply(job: JobPost, resume_path: str, cover_letter_path:
         # click Easy Apply
         if page.get_by_role("button", name="Easy Apply").count() == 0:
             logger.info("No Easy Apply button.")
-            context.close(); browser.close()
+            context.close()
+            browser.close()
             return False
         page.get_by_role("button", name="Easy Apply").first.click()
         page.wait_for_timeout(1500)
@@ -45,13 +45,16 @@ def apply_linkedin_easy_apply(job: JobPost, resume_path: str, cover_letter_path:
                 page.get_by_role("button", name="Submit application").click()
                 page.wait_for_timeout(2000)
                 logger.info("LinkedIn application submitted.")
-                context.close(); browser.close()
+                context.close()
+                browser.close()
                 return True
             btn = page.get_by_role("button", name="Next").first if page.get_by_role("button", name="Next").count() else None
-            if btn: btn.click()
+            if btn:
+                btn.click()
             page.wait_for_timeout(1500)
 
-        context.close(); browser.close()
+        context.close()
+        browser.close()
         return False
 
 def open_text(path: str) -> str:

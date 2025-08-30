@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import threading
 from datetime import datetime
 from typing import List
@@ -11,7 +10,7 @@ SRC_DIR = os.path.join(BASE_DIR, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-import streamlit as st
+import streamlit as st  # noqa: E402
 try:
     from streamlit_extras.st_autorefresh import st_autorefresh
 except Exception:
@@ -29,15 +28,15 @@ except Exception:
             unsafe_allow_html=True,
         )
 
-from config import cfg
-from preferences import get_preferences
-from storage.models import JobPost
-from providers import indeed as indeed_p
-from providers import wellfound as wellfound_p
-from providers import internshala as internshala_p
-from providers import linkedin as linkedin_p
-from utils.logger import get_logger
-from storage.db import get_conn
+from config import cfg  # noqa: E402
+from preferences import get_preferences  # noqa: E402
+from storage.models import JobPost  # noqa: E402
+from providers import indeed as indeed_p  # noqa: E402
+from providers import wellfound as wellfound_p  # noqa: E402
+from providers import internshala as internshala_p  # noqa: E402
+from providers import linkedin as linkedin_p  # noqa: E402
+from utils.logger import get_logger  # noqa: E402
+from storage.db import get_conn  # noqa: E402
 
 logger = get_logger("ui")
 
@@ -139,7 +138,7 @@ def main():
             st.session_state.jobs = []
             st.session_state.search_running = True
             keywords = [k.strip() for k in kw_input.split(",") if k.strip()]
-            locations = [l.strip() for l in loc_input.split(",") if l.strip()]
+            locations = [loc.strip() for loc in loc_input.split(",") if loc.strip()]
             providers_flags = {
                 "indeed": p_indeed,
                 "wellfound": p_wellfound,

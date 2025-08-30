@@ -1,9 +1,8 @@
 import os
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from docx import Document
 
-from ..models.tailored_data import TailoredResumeData
 from ..utils.docx_utils import (
     add_paragraph_with_style,
     add_section,

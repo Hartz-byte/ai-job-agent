@@ -1,3 +1,4 @@
+-e git+https://github.com/Hartz-byte/ai-job-agent.git@9f1c92385dc713923138d497182bf3f57f28a8fb#egg=ai_job_agent
 altair==5.5.0
 altex==0.2.0
 annotated-types==0.7.0

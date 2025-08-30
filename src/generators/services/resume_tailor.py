@@ -1,21 +1,22 @@
 import os
 import logging
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Optional, Dict, List
 from docx import Document
 
 from ..models.tailored_data import TailoredResumeData
 from ..utils.docx_utils import (
     add_paragraph_with_style,
     add_section,
-    add_bullet_points
+    add_bullet_points,
+    get_or_create_style
 )
 from ..utils.template_utils import (
     get_template_path,
     create_document,
     save_document
 )
-from src.llm import get_local_llm
-from src.llm.prompts import TAILOR_PROMPT
+from llm import get_local_llm
+from llm.prompts import TAILOR_PROMPT
 
 logger = logging.getLogger("tailor")
 
@@ -115,44 +116,61 @@ class ResumeTailor:
         logger.info("Updating template with tailored data...")
         
         try:
-            # Preserve the first paragraph (name and contact info)
-            if len(doc.paragraphs) > 0:
-                # Keep the first paragraph as is (name and contact info)
-                first_para = doc.paragraphs[0]
-                
-                # Update the summary section if it exists, otherwise add it
-                summary_heading = self._find_section_heading(doc, "SUMMARY")
-                if summary_heading:
-                    self._update_summary_section(doc, tailored_data.summary)
-                else:
-                    # Add summary section after the first paragraph if it doesn't exist
-                    if len(doc.paragraphs) > 1:
-                        doc.paragraphs[1].insert_paragraph_before(tailored_data.summary, style='Body Text')
-                    else:
-                        doc.add_paragraph(tailored_data.summary, style='Body Text')
+            # First, ensure all required styles exist
+            self._ensure_styles_exist(doc)
             
-                # Define sections to update with their corresponding methods and data
-                sections_to_update = [
-                    ("EXPERIENCE", self._update_experience_section, tailored_data.experience),
-                    ("PROJECTS", self._update_projects_section, tailored_data.projects),
-                    ("SKILLS", self._update_skills_section, tailored_data.technical_skills),
-                    ("EDUCATION", self._update_education_section, tailored_data.education),
-                    ("RESEARCH PUBLICATIONS", self._update_research_publications, 
-                     getattr(tailored_data, 'research_publications', None))
-                ]
-                
-                # Update each section if the corresponding data exists
-                for section_name, update_func, section_data in sections_to_update:
-                    if section_data:  # Only update if we have data for this section
-                        try:
-                            logger.info(f"Updating {section_name} section...")
-                            update_func(doc, section_data)
-                        except Exception as e:
-                            logger.warning(f"Failed to update {section_name} section: {str(e)}")
+            # Process each section
+            sections = [
+                ("SUMMARY", self._update_summary_section, tailored_data.summary, True),
+                ("EXPERIENCE", self._update_experience_section, tailored_data.experience, True),
+                ("PROJECTS", self._update_projects_section, tailored_data.projects, False),
+                ("SKILLS", self._update_skills_section, tailored_data.technical_skills, True),
+                ("EDUCATION", self._update_education_section, tailored_data.education, True),
+                ("RESEARCH PUBLICATIONS", self._update_research_publications, 
+                 getattr(tailored_data, 'research_publications', None), False)
+            ]
             
+            for section_name, update_func, section_data, required in sections:
+                if not section_data and required:
+                    logger.warning(f"Missing data for required section: {section_name}")
+                    continue
+                    
+                try:
+                    logger.info(f"Updating {section_name} section...")
+                    
+                    # Find or create section heading
+                    heading = self._find_section_heading(doc, section_name)
+                    if not heading:
+                        # Add a new section if it doesn't exist
+                        if doc.paragraphs and doc.paragraphs[-1].text.strip():
+                            doc.add_paragraph()  # Add spacing
+                        heading = doc.add_heading(section_name.title(), level=1)
+                        doc.add_paragraph()  # Add spacing after heading
+                    
+                    # Update the section content
+                    update_func(doc, section_data)
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to update {section_name} section: {str(e)}")
+                    logger.debug("Error details:", exc_info=True)
+        
         except Exception as e:
             logger.error(f"Error updating template: {str(e)}")
+            logger.debug("Error details:", exc_info=True)
             raise
+            
+    def _ensure_styles_exist(self, doc: Document) -> None:
+        """Ensure all required styles exist in the document."""
+        required_styles = [
+            'Title', 'Subtitle', 'Heading 1', 'Heading 2', 'Heading 3',
+            'Normal', 'List Bullet', 'List Number', 'Strong', 'Emphasis'
+        ]
+        
+        for style_name in required_styles:
+            get_or_create_style(doc, style_name)
+            
+        # Ensure proper list numbering
+        self._ensure_numbering(doc)
     
     def _build_resume_from_scratch(
         self, 
@@ -299,69 +317,109 @@ class ResumeTailor:
                     p.add_run(bullet.strip())
     
     def _update_skills_section(self, doc: Document, skills: Dict[str, List[str]]) -> None:
-        """Update the skills section in the template with improved formatting."""
-        if not skills:
+        """Update skills section in the document."""
+        try:
+            # Find skills section or create it
+            skills_heading = self._find_section_heading(doc, "SKILLS")
+            if not skills_heading:
+                skills_heading = doc.add_heading("Skills", level=1)
+                doc.add_paragraph()
+            
+            # Clear existing content until next heading
+            self._clear_until_heading(doc, skills_heading, "SKILLS")
+            
+            if not skills:
+                logger.warning("No skills data provided to update skills section")
+                return
+            
+            # Add skills in a clean format
+            for category, skill_list in skills.items():
+                if not skill_list:
+                    continue
+                    
+                # Add category header
+                add_paragraph_with_style(doc, category.upper(), 'Heading 2')
+                
+                # Add skills as comma-separated list
+                skills_text = ', '.join(skill_list)
+                add_paragraph_with_style(doc, skills_text, 'Normal')
+                
+                # Add spacing between categories
+                doc.add_paragraph()
+                
+        except Exception as e:
+            logger.error(f"Error updating skills section: {str(e)}")
+            logger.debug("Error details:", exc_info=True)
+            # Fallback to simple text
+            try:
+                for category, skill_list in skills.items():
+                    doc.add_paragraph(f"{category.upper()}:")
+                    doc.add_paragraph(", ".join(skill_list))
+            except Exception as e:
+                logger.error(f"Failed to add fallback skills content: {e}")
+    
+    def _update_projects_section(self, doc: Document, projects: List[Dict]) -> None:
+        """Update the projects section in the template with improved formatting."""
+        if not projects:
             return
             
-        skills_heading = self._find_section_heading(doc, "SKILLS")
-        if not skills_heading:
-            # If no skills section exists, add it
-            doc.add_heading("SKILLS", level=1)
+        # Try different possible section headings
+        section_names = ["PROJECTS", "PERSONAL PROJECTS", "SIDE PROJECTS"]
+        proj_heading = None
+        
+        for name in section_names:
+            proj_heading = self._find_section_heading(doc, name)
+            if proj_heading:
+                break
+        
+        if not proj_heading:
+            # If no projects section exists, add it
+            doc.add_heading("PROJECTS", level=1)
             next_para = None
         else:
             # Clear existing content until next section
-            next_para = self._clear_until_next_heading(skills_heading)
+            next_para = self._clear_until_next_heading(proj_heading)
         
-        # Add skills in a tabular format for better organization
-        from docx.shared import Inches, Pt
-        from docx.enum.table import WD_TABLE_ALIGNMENT
-        
-        # Create a table with 2 columns for skills
-        table = doc.add_table(rows=1, cols=2)
-        table.style = 'Table Grid'  # Add borders for better visual separation
-        table.autofit = False
-        
-        # Set column widths
-        col_widths = [Inches(1.5), Inches(5.0)]  # First column for category, second for skills
-        for i, width in enumerate(col_widths):
-            table.columns[i].width = width
-        
-        # Add skills in a two-column format
-        row_idx = 0
-        for category, skill_list in skills.items():
-            if not skill_list:
-                continue
+        # Add projects with consistent formatting
+        for i, proj in enumerate(projects):
+            # Add a blank line between entries, but not before the first one
+            if i > 0 and next_para:
+                next_para.insert_paragraph_before('')
+            
+            # Add project title and details
+            if isinstance(proj, dict):
+                # Add project name and optional link/date
+                title_parts = []
+                if proj.get('name'):
+                    title_parts.append(proj['name'])
+                if proj.get('technologies'):
+                    if isinstance(proj['technologies'], list):
+                        tech_str = ', '.join(proj['technologies'])
+                    else:
+                        tech_str = str(proj['technologies'])
+                    title_parts.append(f"Technologies: {tech_str}")
                 
-            # Add a new row for each category
-            if row_idx > 0:
-                row_cells = table.add_row().cells
+                title = ' | '.join(title_parts)
+                add_paragraph_with_style(doc, title, style='Heading 2')
+                
+                # Add project description points
+                if proj.get('description'):
+                    if isinstance(proj['description'], str):
+                        # Split by newlines if it's a string
+                        points = [p.strip() for p in proj['description'].split('\n') if p.strip()]
+                    else:
+                        points = proj['description']
+                    
+                    for point in points:
+                        if point.strip():
+                            add_bullet_points(doc, [point])
             else:
-                row_cells = table.rows[0].cells
-                
-            # Add category in the first column (bold)
-            category_cell = row_cells[0]
-            category_cell.paragraphs[0].add_run(category).bold = True
-            
-            # Add skills in the second column (comma-separated)
-            skills_cell = row_cells[1]
-            skills_cell.text = ', '.join(skill_list)
-            
-            # Adjust cell margins and alignment
-            for cell in row_cells:
-                cell.vertical_alignment = WD_TABLE_ALIGNMENT.CENTER
-                for paragraph in cell.paragraphs:
-                    paragraph_format = paragraph.paragraph_format
-                    paragraph_format.space_after = Pt(0)
-                    paragraph_format.space_before = Pt(0)
-                    paragraph_format.line_spacing = 1.0
-            
-            row_idx += 1
+                # Fallback for string project entries
+                add_paragraph_with_style(doc, str(proj), style='Body Text')
         
-        # Add a blank line after the table
-        if next_para:
+        # Add a blank line after the section
+        if next_para and next_para.text.strip() != '':
             next_para.insert_paragraph_before('')
-        else:
-            doc.add_paragraph('')
     
     def _update_education_section(self, doc: Document, education: List) -> None:
         """Update the education section in the template with improved formatting."""
@@ -383,7 +441,7 @@ class ResumeTailor:
                 next_para.insert_paragraph_before('')
             
             # Create a table for each education entry to align degree and date
-            from docx.shared import Inches, Pt
+            from docx.shared import Inches
             from docx.enum.table import WD_TABLE_ALIGNMENT
             
             # Create a table with 2 columns (degree and date)
@@ -491,39 +549,79 @@ class ResumeTailor:
                 return para
         return None
     
-    def _clear_until_next_heading(self, para):
-        """Clear content until the next heading or end of document."""
-        if not hasattr(para, '_element') or not hasattr(para._element, 'getparent'):
-            return None
-            
-        parent = para._element.getparent()
-        if parent is None:
-            return None
-            
-        # Get all paragraphs in the document
-        all_paras = [p for p in parent.iterchildren('w:p')]
+    def _clear_until_heading(self, doc: Document, start_para, target_heading: str):
+        """
+        Clear content from start_para until the next heading.
         
+        Args:
+            doc: The document
+            start_para: The starting paragraph
+            target_heading: The heading text to find (case-insensitive)
+            
+        Returns:
+            The next heading paragraph, or None if not found
+        """
         try:
-            # Find the index of the current paragraph
-            current_idx = all_paras.index(para._element)
+            if not hasattr(start_para, '_element'):
+                return None
+                
+            # Get the parent element containing paragraphs
+            parent = start_para._element.getparent()
+            if parent is None:
+                return None
+                
+            # Get all paragraphs
+            all_paras = list(parent.iterchildren('w:p'))
+            if not all_paras:
+                return None
+                
+            # Find the starting index
+            start_idx = None
+            for i, p in enumerate(all_paras):
+                if p == start_para._element:
+                    start_idx = i
+                    break
+                    
+            if start_idx is None:
+                return None
+                
+            # Find the next heading
+            next_heading = None
+            for i in range(start_idx + 1, len(all_paras)):
+                p = all_paras[i]
+                
+                # Check if this is a heading
+                is_heading = False
+                style_name = p.xpath('.//w:pStyle/@w:val')
+                if style_name:
+                    style_name = style_name[0].lower()
+                    is_heading = style_name.startswith('heading') or style_name in ['title', 'subtitle']
+                
+                # Check if this is our target heading
+                para_text = ''.join(node.text for node in p.xpath('.//w:t') if node.text)
+                if is_heading and target_heading.lower() in para_text.lower():
+                    next_heading = p
+                    break
+                    
+            # Clear content between start_para and next_heading
+            end_idx = all_paras.index(next_heading) if next_heading else len(all_paras)
             
-            # Iterate through following paragraphs
-            for i in range(current_idx + 1, len(all_paras)):
-                next_para = all_paras[i]
+            # Keep the start_para but clear its content
+            if start_para._element.text:
+                start_para.clear()
                 
-                # Get the paragraph style
-                style_elem = next_para.find('.//w:pStyle', namespaces=next_para.nsmap)
-                if style_elem is not None:
-                    style_name = style_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
-                    if style_name and style_name.startswith('Heading'):
-                        # Found the next heading, return its paragraph element
-                        from docx.oxml.text.paragraph import CT_P
-                        return next_para
-                
-                # Remove the paragraph
-                parent.remove(next_para)
-                
-        except (ValueError, AttributeError) as e:
-            logger.warning(f"Error clearing until next heading: {str(e)}")
+            # Remove paragraphs between start and end
+            for i in range(start_idx + 1, end_idx):
+                if i < len(all_paras):
+                    try:
+                        p = all_paras[i]
+                        p.getparent().remove(p)
+                    except Exception as e:
+                        logger.warning(f"Error removing paragraph: {e}")
+                        continue
             
-        return None
+            return next_heading
+            
+        except Exception as e:
+            logger.warning(f"Error in _clear_until_heading: {e}")
+            return None

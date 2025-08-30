@@ -55,7 +55,7 @@ def generate_test_resume():
     """Generate a test resume document with sample content."""
     from docx import Document
     from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Pt, Inches
+    from docx.shared import Pt
     
     doc = Document()
     

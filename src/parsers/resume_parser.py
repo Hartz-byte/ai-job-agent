@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List
 from pdfminer.high_level import extract_text as pdf_extract_text
 from docx import Document
-import os
 import re
 
 @dataclass
@@ -82,7 +81,7 @@ def _extract_contact_info(text: str) -> Dict[str, Optional[str]]:
         contact["github"] = github_match.group(0)
 
     # Name extraction (first few lines, non-email lines, 2-4 words)
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     for line in lines[:10]:
         if contact["email"] and contact["email"] in line:
             continue
@@ -113,7 +112,7 @@ def _parse_experience_section(text: str) -> List[Experience]:
         if not entry.strip():
             continue
 
-        lines = [l.strip() for l in entry.strip().split("\n") if l.strip()]
+        lines = [line.strip() for line in entry.strip().split("\n") if line.strip()]
         if not lines:
             continue
 
@@ -171,7 +170,7 @@ def _parse_projects_section(text: str) -> List[Project]:
         if not entry.strip():
             continue
 
-        lines = [l.strip() for l in entry.strip().split("\n") if l.strip()]
+        lines = [line.strip() for line in entry.strip().split("\n") if line.strip()]
         if not lines:
             continue
 
@@ -251,7 +250,7 @@ def _parse_education_section(text: str) -> List[Education]:
         return education
 
     edu_text = edu_match.group(1).strip()
-    lines = [l.strip() for l in edu_text.split("\n") if l.strip()]
+    lines = [line.strip() for line in edu_text.split("\n") if line.strip()]
 
     for line in lines:
         # Look for degree patterns
@@ -277,7 +276,7 @@ def _parse_research_section(text: str) -> List[ResearchPublication]:
         return publications
 
     research_text = research_match.group(1).strip()
-    lines = [l.strip() for l in research_text.split("\n") if l.strip()]
+    lines = [line.strip() for line in research_text.split("\n") if line.strip()]
 
     for line in lines:
         # Extract publication title and link

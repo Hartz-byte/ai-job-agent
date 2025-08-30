@@ -27,10 +27,14 @@ def gather_jobs() -> list[JobPost]:
     prefs = get_preferences()
     locations = prefs.cities or ["India"]
     providers: list[tuple[str, callable]] = []
-    if cfg.enable_indeed: providers.append(("indeed", indeed_p.search))
-    if cfg.enable_wellfound: providers.append(("wellfound", wellfound_p.search))
-    if cfg.enable_internshala: providers.append(("internshala", internshala_p.search))
-    if cfg.enable_linkedin: providers.append(("linkedin", linkedin_p.search))
+    if cfg.enable_indeed:
+        providers.append(("indeed", indeed_p.search))
+    if cfg.enable_wellfound:
+        providers.append(("wellfound", wellfound_p.search))
+    if cfg.enable_internshala:
+        providers.append(("internshala", internshala_p.search))
+    if cfg.enable_linkedin:
+        providers.append(("linkedin", linkedin_p.search))
 
     results: list[JobPost] = []
     seen_ids: set[str] = set()
