@@ -2,3 +2,4 @@
 /venv
 /output
 /agent.db
+__pycache__/
