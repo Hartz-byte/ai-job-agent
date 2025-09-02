@@ -130,9 +130,7 @@ def main():
         show_db = st.checkbox("Show results from database (includes backend main.py)", value=True, help="If enabled, the Results tab will read from the SQLite jobs table so you can see jobs gathered by the backend pipeline.")
         st.session_state.show_db = show_db
 
-        st.subheader("Live Logs Settings")
-        auto_refresh_logs = st.checkbox("Auto-refresh logs (every 10s)", value=False, help="Turn ON for background monitoring; keep OFF while interacting to avoid page refresh.")
-        st.session_state.auto_refresh_logs = auto_refresh_logs
+        # Removed Live Logs settings as the section has been removed
 
         if start and not st.session_state.search_running:
             st.session_state.jobs = []
@@ -152,37 +150,37 @@ def main():
             st.session_state.search_running = False
 
     # Main layout
-    tab_logs, tab_results, tab_about = st.tabs(["Live Logs", "Results", "About"]) 
+    tab_jobs, tab_about = st.tabs(["Jobs", "About"]) 
 
-    with tab_logs:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**Agent Log**")
-            agent_area = st.empty()
-        with col2:
-            st.markdown("**LinkedIn Log**")
-            li_area = st.empty()
-
-        # Auto-refresh only if user enabled it; otherwise provide manual refresh
-        if st.session_state.get("auto_refresh_logs", False):
-            st_autorefresh(interval=10000, key="logs_refresh")
-        else:
-            st.info("Auto-refresh is off. Click to refresh logs.")
-            st.button("Refresh now", key="refresh_logs_now")
-        agent_lines = _tail_file(LOG_FILES[0][1])
-        li_lines = _tail_file(LOG_FILES[1][1])
-        agent_area.code("".join(agent_lines), language="text")
-        li_area.code("".join(li_lines), language="text")
-
-    with tab_results:
-        st.subheader("Found Jobs")
+    with tab_jobs:
+        st.subheader("Job Listings")
         st.caption(f"Last update: {st.session_state.last_update}")
 
-        def _load_jobs_from_db(limit: int = 200):
+        def _load_jobs_from_db(provider: str = None, limit: int = 200):
             try:
                 conn = get_conn()
                 cur = conn.cursor()
-                cur.execute("SELECT id, title, company, location, url, source, created_at FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,))
+                if provider:
+                    cur.execute(
+                        """
+                        SELECT id, title, company, location, url, source, created_at 
+                        FROM jobs 
+                        WHERE source = ? 
+                        ORDER BY created_at DESC 
+                        LIMIT ?
+                        """, 
+                        (provider, limit)
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT id, title, company, location, url, source, created_at 
+                        FROM jobs 
+                        ORDER BY created_at DESC 
+                        LIMIT ?
+                        """, 
+                        (limit,)
+                    )
                 rows = cur.fetchall()
                 conn.close()
                 return rows
@@ -190,26 +188,73 @@ def main():
                 st.warning(f"DB read failed: {e}")
                 return []
 
-        if st.session_state.get("show_db", True):
-            rows = _load_jobs_from_db()
-            st.write(f"Total (latest {len(rows)} from DB): {len(rows)}")
-            for (jid, title, company, location, url, source, created_at) in rows:
-                with st.container(border=True):
-                    top = st.columns([3, 2, 2, 2, 1])
-                    with top[0]:
-                        st.markdown(f"**{title}**")
-                    with top[1]:
-                        st.text(company)
-                    with top[2]:
-                        st.text(location)
-                    with top[3]:
-                        st.text(source)
-                    with top[4]:
-                        st.link_button("Open", url or "#")
-                    with st.expander("Meta"):
-                        st.text(f"Job ID: {jid}")
-                        st.text(f"Created: {created_at}")
+        # Get all available providers from the database
+        def get_available_providers():
+            try:
+                conn = get_conn()
+                cur = conn.cursor()
+                cur.execute("SELECT DISTINCT source FROM jobs")
+                providers = [row[0] for row in cur.fetchall()]
+                conn.close()
+                return providers
+            except Exception as e:
+                st.warning(f"Failed to fetch providers: {e}")
+                return []
+
+        # Get all providers from the search results
+        available_providers = get_available_providers()
+        
+        # Create tabs for each provider
+        if available_providers:
+            provider_tabs = st.tabs(["All"] + available_providers)
+            
+            with provider_tabs[0]:  # All tab
+                rows = _load_jobs_from_db()
+                st.write(f"Showing all jobs (latest {len(rows)} from DB)")
+                for (jid, title, company, location, url, source, created_at) in rows:
+                    with st.container(border=True):
+                        top = st.columns([3, 2, 2, 2, 1])
+                        with top[0]:
+                            st.markdown(f"**{title}**")
+                        with top[1]:
+                            st.text(company)
+                        with top[2]:
+                            st.text(location)
+                        with top[3]:
+                            st.text(source)
+                        with top[4]:
+                            st.link_button("Open", url or "#")
+                        with st.expander("Details"):
+                            st.text(f"Posted: {created_at}")
+                            st.text(f"ID: {jid}")
+            
+            # Create a tab for each provider
+            for i, provider in enumerate(available_providers, 1):
+                with provider_tabs[i]:
+                    provider_jobs = _load_jobs_from_db(provider=provider)
+                    st.write(f"Showing {len(provider_jobs)} jobs from {provider}")
+                    for (jid, title, company, location, url, source, created_at) in provider_jobs:
+                        with st.container(border=True):
+                            top = st.columns([3, 2, 2, 2, 1])
+                            with top[0]:
+                                st.markdown(f"**{title}**")
+                            with top[1]:
+                                st.text(company)
+                            with top[2]:
+                                st.text(location)
+                            with top[3]:
+                                st.text(created_at.split()[0])  # Just the date part
+                            with top[4]:
+                                st.link_button("Open", url or "#")
+                            with st.expander("Details"):
+                                st.text(f"Posted: {created_at}")
+                                st.text(f"ID: {jid}")
         else:
+            st.info("No job listings found. Run a search to see results here.")
+        
+        # Show in-session jobs in a separate section if they exist
+        if not st.session_state.get("show_db", True) and st.session_state.jobs:
+            st.subheader("Current Session Jobs")
             jobs = st.session_state.jobs or []
             st.write(f"Total (this UI session): {len(jobs)}")
             for j in jobs:
@@ -230,16 +275,23 @@ def main():
 
     with tab_about:
         st.markdown("""
-        ### App Details
-        - Shows real-time logs from `output/logs/agent.log` and `output/logs/linkedin.log`.
-        - Searches selected providers sequentially using your input keywords and locations.
-        - Results update live without restarting the app.
-        - Backend tailoring and apply steps are not triggered from this UI.
+        ### AI Job Agent
+        A tool to search and monitor job postings across multiple platforms.
 
-        #### Tips
-        - Configure preferences and providers in `src/preferences.py` and `src/config.py`.
-        - Ensure `.env` has any credentials needed (e.g., LinkedIn if required).
-        - Anchors in resume templates supported: `{{SUMMARY}}`, `{{BULLETS}}`, `{{SKILLS}}` or `[TAILOR_*]` variants.
+        ### Features
+        - Search jobs from multiple providers (Indeed, Wellfound, Internshala, LinkedIn)
+        - View job details and apply directly from the app
+        - Configure search preferences and locations
+        - Resume/cover letter generation (can be toggled in .env)
+
+        ### Configuration
+        - Set `ENABLE_TAILORING=true/false` in `.env` to enable/disable resume/cover letter generation
+        - Configure preferences in `src/preferences.py` and `src/config.py`
+        - Ensure `.env` has any required API credentials
+
+        ### Tips
+        - Use comma-separated values for multiple keywords or locations
+        - Toggle providers in the sidebar to include/exclude job sources
         """)
 
 
