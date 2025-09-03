@@ -33,6 +33,7 @@ class Config(BaseModel):
     apply_internshala: bool = os.getenv("APPLY_INTERNSHALA", "true").lower() == "true"
     apply_wellfound: bool = os.getenv("APPLY_WELLFOUND", "true").lower() == "true"
     apply_indeed: bool = os.getenv("APPLY_INDEED", "false").lower() == "true"
+    enable_tailoring: bool = os.getenv("ENABLE_TAILORING", "true").lower() == "true"
 
     requests_per_min: int = int(os.getenv("REQUESTS_PER_MIN", "16"))
     db_path: str = os.getenv("DB_PATH", "./agent.db")

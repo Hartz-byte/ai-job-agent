@@ -67,6 +67,11 @@ def process_jobs(jobs: Iterable[JobPost], profile):
         output_dir = os.path.join('output', 'tailored', job_slug)
         os.makedirs(output_dir, exist_ok=True)
         
+        # Check if tailoring is enabled
+        if not cfg.enable_tailoring:
+            logger.info("Tailoring is disabled. Skipping resume and cover letter generation.")
+            return
+            
         # Generate resume and cover letter
         resume_out = os.path.join(output_dir, f'resume_{job_slug}.docx')
         cl_out = os.path.join(output_dir, f'cover_letter_{job_slug}.docx')
@@ -77,7 +82,7 @@ def process_jobs(jobs: Iterable[JobPost], profile):
             # Generate tailored content first
             tailored_data = resume_tailor.generate_tailored_content()
             # Create the resume with tailored content
-            resume_tailor.create_tailored_resume(tailored_data, resume_out)
+            resume_tailor.create_tailored_resume(tailored_data, resume_out) 
             
             # Create cover letter
             cl_service = CoverLetterService(profile, job)
